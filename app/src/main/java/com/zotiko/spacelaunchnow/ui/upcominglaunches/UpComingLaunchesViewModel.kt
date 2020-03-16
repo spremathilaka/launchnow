@@ -45,7 +45,6 @@ class UpComingLaunchesViewModel(
                 .subscribeWith(
                     object : DisposableSingleObserver<GetUpComingLaunchesUC.ResponseValue>() {
                         override fun onSuccess(apiResponse: GetUpComingLaunchesUC.ResponseValue) {
-                            Log.d("MmmmM","onSuccess")
                             Timber.d("Up Coming Events = ${apiResponse.upComingLaunchEventList.size}")
                             mutableViewState.update(activityData = apiResponse.upComingLaunchEventList)
                         }
@@ -53,15 +52,16 @@ class UpComingLaunchesViewModel(
                         override fun onError(error: Throwable) {
                             error.printStackTrace()
                             println(error)
-                            if (error is IOException) {
-                                println(PageErrorState.NO_NETWORK)
-                                mutableViewState.update(errorState = PageErrorState.NO_NETWORK)
-                            } else if (error is HttpException) {
-                                println(PageErrorState.SERVER_ERROR)
-                                mutableViewState.update(errorState = PageErrorState.SERVER_ERROR)
-                            }else if (error is Exception) {
-                                println(PageErrorState.UNKNOWN_ERROR)
-                                mutableViewState.update(errorState = PageErrorState.UNKNOWN_ERROR)
+                            when (error) {
+                                is IOException -> {
+                                    mutableViewState.update(errorState = PageErrorState.NO_NETWORK)
+                                }
+                                is HttpException -> {
+                                    mutableViewState.update(errorState = PageErrorState.SERVER_ERROR)
+                                }
+                                is Exception -> {
+                                    mutableViewState.update(errorState = PageErrorState.UNKNOWN_ERROR)
+                                }
                             }
                             Timber.e(error)
                         }
