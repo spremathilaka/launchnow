@@ -17,12 +17,15 @@ import com.zotiko.spacelaunchnow.util.CustomMatchers.Companion.withItemCount
 import com.zotiko.spacelaunchnow.utils.TestUtils
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.hamcrest.Matchers.not
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
@@ -53,11 +56,11 @@ class MainActivityTest {
     fun shouldShowResultWhenApiSuccess() {
         launchActivity()
         this.mockHttpResponse("json/getLaunchList_whenSuccess.json", HttpURLConnection.HTTP_OK)
-        /*onView(withId(R.id.pageLoadingIndicator)).check(
+        onView(withId(R.id.pageLoadingIndicator)).check(
             ViewAssertions.matches(
                 not(ViewMatchers.isDisplayed())
             )
-        )*/
+        )
         onView(withId(R.id.launchEventRecyclerView))
             .check(ViewAssertions.matches(withItemCount(3)))
         onView(withId(R.id.launchEventRecyclerView)).check(
@@ -67,13 +70,14 @@ class MainActivityTest {
         )
     }
 
+    @After
+    fun tearDown() {
+       mockWebServer.shutdown()
+    }
     @Test
     fun shouldShowSnackBarWhenNoInternet() {
         launchActivity()
-        this.mockHttpResponse(
-            "json/error.json",
-            HttpURLConnection.HTTP_INTERNAL_ERROR
-        )
+        noInternetMock()
         onView(withId(R.id.launchEventRecyclerView)).check(
             ViewAssertions.matches(
                 not(ViewMatchers.isDisplayed())
@@ -82,6 +86,20 @@ class MainActivityTest {
         SystemClock.sleep(1000)
         onView(withId(com.google.android.material.R.id.snackbar_text))
             .check(ViewAssertions.matches(withText(R.string.no_internet_error_msg)))
+    }
+
+    private fun noInternetMock() {
+
+
+        val response = TestUtils.readTestResourceFile("json/getLaunchList_whenSuccess.json")
+        val mockResponse = MockResponse()
+            .addHeader("Content-Type", "application/json; charset=utf-8")
+            .addHeader("Cache-Control", "no-cache")
+            .setBody(response)
+           // .throttleBody(1024, 1, TimeUnit.SECONDS)
+
+        mockResponse.socketPolicy = SocketPolicy.NO_RESPONSE
+        return mockWebServer.enqueue(mockResponse)
     }
 
     @Test
@@ -103,7 +121,7 @@ class MainActivityTest {
 
     private fun mockHttpResponse(fileName: String, responseCode: Int) {
         val response = TestUtils.readTestResourceFile(fileName)
-        return mockWebServer.enqueue(
+        mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(responseCode)
                 .setBody(response)
