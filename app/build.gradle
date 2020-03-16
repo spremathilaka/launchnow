@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId "com.zotiko.spacelaunchnow"
-        minSdkVersion 22
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -151,6 +151,7 @@ dependencies {
     // Testing Navigation
     androidTestImplementation "androidx.navigation:navigation-testing:$nav_version"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$mockwebserver"
+    androidTestImplementation "com.squareup.retrofit2:retrofit-mock:$retrofit_version"
 
     implementation "com.google.dagger:dagger:$dagger2_version"
 

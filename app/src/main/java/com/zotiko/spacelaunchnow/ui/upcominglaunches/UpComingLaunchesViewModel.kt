@@ -1,5 +1,6 @@
 package com.zotiko.spacelaunchnow.ui.upcominglaunches
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.zotiko.spacelaunchnow.di.modules.OBSERVER_ON
@@ -37,6 +38,8 @@ class UpComingLaunchesViewModel(
             getUpComingLaunchUseCase.run(GetUpComingLaunchesUC.RequestValues())
                 .observeOn(observerOn)
                 .doOnSubscribe {
+                    println("doOnSubscribe")
+
                     mutableViewState.update(isLoading = true)
                 }
                 .subscribeWith(
@@ -47,13 +50,22 @@ class UpComingLaunchesViewModel(
                         }
 
                         override fun onError(error: Throwable) {
-                            if (error is IOException) {
-                                mutableViewState.update(errorState = PageErrorState.NO_NETWORK)
-                            } else if (error is HttpException) {
-                                mutableViewState.update(errorState = PageErrorState.SERVER_ERROR)
+                            error.printStackTrace()
+                            println(error)
+                            when (error) {
+                                is IOException -> {
+                                    mutableViewState.update(errorState = PageErrorState.NO_NETWORK)
+                                }
+                                is HttpException -> {
+                                    mutableViewState.update(errorState = PageErrorState.SERVER_ERROR)
+                                }
+                                is Exception -> {
+                                    mutableViewState.update(errorState = PageErrorState.UNKNOWN_ERROR)
+                                }
                             }
                             Timber.e(error)
                         }
+
                     }
                 )
         )
@@ -69,5 +81,7 @@ class UpComingLaunchesViewModel(
             activityData = activityData,
             errorState = errorState
         )
+
+
     }
 }
