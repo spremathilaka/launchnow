@@ -12,8 +12,7 @@ import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
 import javax.inject.Inject
 
-class MainActivity : AppCompatActivity(), HasAndroidInjector,
-    LaunchEventListFragment.OnFragmentInteractionListener {
+class MainActivity : AppCompatActivity(), HasAndroidInjector {
 
     @Inject
     lateinit var androidInjector: DispatchingAndroidInjector<Any>
@@ -29,10 +28,9 @@ class MainActivity : AppCompatActivity(), HasAndroidInjector,
         val navController = Navigation.findNavController(this, R.id.nav_fragment)
         NavigationUI.setupActionBarWithNavController(this, navController)
     }
+
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
 
     override fun onSupportNavigateUp() =
         Navigation.findNavController(this, R.id.nav_fragment).navigateUp()
-
-
 }
