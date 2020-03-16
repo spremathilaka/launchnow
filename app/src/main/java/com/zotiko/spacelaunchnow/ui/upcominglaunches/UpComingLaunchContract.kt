@@ -7,7 +7,7 @@ interface UpComingLaunchContract {
 
     data class ViewState(
         val isLoading: Boolean = false,
-        val activityData: List<LaunchEventDTO> = listOf(),
+        val activityData: List<LaunchEventDTO> ? = null,
         val errorState: PageErrorState? = null
     )
 }

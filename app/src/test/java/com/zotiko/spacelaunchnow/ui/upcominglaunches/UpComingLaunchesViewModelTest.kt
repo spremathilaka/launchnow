@@ -4,7 +4,6 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import com.zotiko.spacelaunchnow.domain.upcominglaunches.GetUpComingLaunchesUC
 import com.zotiko.spacelaunchnow.model.UpComingLaunches
-import com.zotiko.spacelaunchnow.ui.data.PageErrorState
 import com.zotiko.spacelaunchnow.utils.TestUtils
 import com.zotiko.spacelaunchnow.utils.any
 import com.zotiko.spacelaunchnow.utils.lambdaMock
@@ -15,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -55,6 +55,7 @@ class UpComingLaunchesViewModelTest {
             Schedulers.trampoline()
         )
         viewModel.viewState.observeForever(viewStateObserver)
+        viewModel.fetchLaunchEvents()
     }
 
     @Test
@@ -62,15 +63,15 @@ class UpComingLaunchesViewModelTest {
         // Given
         Mockito.`when`(fetchGetUpComingLaunchesUC.run(any()))
             .thenReturn(getDummyUpComingLaunches())
-        initViewModel()
         // When
-        viewModel.fetchLaunchEvents()
+        initViewModel()
         // Then
         with(viewStateCaptor) {
             verify(viewStateObserver, times(2)).onChanged(capture())
-            assertFalse(value.isLoading)
-            assertNotNull(value.activityData)
-            assertNull(value.errorState)
+            assertTrue(allValues[0].isLoading)
+            assertFalse(allValues[1].isLoading)
+            assertNotNull(allValues[1].activityData)
+            assertNull(allValues[1].errorState)
         }
     }
 
@@ -79,18 +80,16 @@ class UpComingLaunchesViewModelTest {
         // Given
         Mockito.`when`(fetchGetUpComingLaunchesUC.run(any()))
             .thenReturn(Single.error(IOException()))
-        initViewModel()
+
         // When
-        viewModel.fetchLaunchEvents()
+        initViewModel()
         // Then
         with(viewStateCaptor) {
             verify(viewStateObserver, times(2)).onChanged(capture())
-            assertEquals(
-                UpComingLaunchContract.ViewState(
-                    isLoading = false,
-                    errorState = PageErrorState.NO_NETWORK
-                ), value
-            )
+            assertTrue(allValues[0].isLoading)
+            assertFalse(allValues[1].isLoading)
+            assertNull(allValues[1].activityData)
+            assertNotNull(allValues[1].errorState)
         }
     }
 

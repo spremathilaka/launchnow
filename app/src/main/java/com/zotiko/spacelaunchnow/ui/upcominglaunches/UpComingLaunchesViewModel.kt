@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.zotiko.spacelaunchnow.di.modules.OBSERVER_ON
 import com.zotiko.spacelaunchnow.domain.upcominglaunches.GetUpComingLaunchesUC
+import com.zotiko.spacelaunchnow.dto.LaunchEventDTO
 import com.zotiko.spacelaunchnow.ui.base.BaseViewModel
 import com.zotiko.spacelaunchnow.ui.data.PageErrorState
 import io.reactivex.Scheduler
@@ -20,33 +21,36 @@ class UpComingLaunchesViewModel(
 
     private val mutableViewState = MutableLiveData<UpComingLaunchContract.ViewState>()
 
-    val viewState: LiveData<UpComingLaunchContract.ViewState>
-        get() = mutableViewState
+    val viewState: LiveData<UpComingLaunchContract.ViewState> = mutableViewState
+
+    init {
+        //TODO check unit test with this
+        //fetchLaunchEvents()
+    }
+
+    private fun currentViewState(): UpComingLaunchContract.ViewState =
+        viewState.value ?: UpComingLaunchContract.ViewState()
 
     fun fetchLaunchEvents() {
-
-        mutableViewState.value = UpComingLaunchContract.ViewState(
-            isLoading = true, errorState = null
-        )
 
         addDisposable(
             getUpComingLaunchUseCase.run(GetUpComingLaunchesUC.RequestValues())
                 .observeOn(observerOn)
+                .doOnSubscribe {
+                    mutableViewState.update(isLoading = true)
+                }
                 .subscribeWith(
                     object : DisposableSingleObserver<GetUpComingLaunchesUC.ResponseValue>() {
                         override fun onSuccess(apiResponse: GetUpComingLaunchesUC.ResponseValue) {
                             Timber.d("Up Coming Events = ${apiResponse.upComingLaunchEventList.size}")
-                            mutableViewState.value = UpComingLaunchContract.ViewState(
-                                isLoading = false,
-                                activityData = apiResponse.upComingLaunchEventList
-                            )
+                            mutableViewState.update(activityData = apiResponse.upComingLaunchEventList)
                         }
 
                         override fun onError(error: Throwable) {
                             if (error is IOException) {
-                                handleLoadingError(PageErrorState.NO_NETWORK)
+                                mutableViewState.update(errorState = PageErrorState.NO_NETWORK)
                             } else if (error is HttpException) {
-                                handleLoadingError(PageErrorState.SERVER_ERROR)
+                                mutableViewState.update(errorState = PageErrorState.SERVER_ERROR)
                             }
                             Timber.e(error)
                         }
@@ -55,9 +59,14 @@ class UpComingLaunchesViewModel(
         )
     }
 
-    private fun handleLoadingError(errorState: PageErrorState) {
-        mutableViewState.value = UpComingLaunchContract.ViewState(
-            isLoading = false,
+    fun MutableLiveData<UpComingLaunchContract.ViewState>.update(
+        isLoading: Boolean = false,
+        activityData: List<LaunchEventDTO> ?= null,
+        errorState: PageErrorState? = null
+    ) {
+        this.value = currentViewState().copy(
+            isLoading = isLoading,
+            activityData = activityData,
             errorState = errorState
         )
     }

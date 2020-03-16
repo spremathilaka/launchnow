@@ -33,13 +33,11 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
     @Inject
     lateinit var vmFactory: ViewModelFactory
 
-    private var listener: OnFragmentInteractionListener? = null
-
     private lateinit var viewModel: UpComingLaunchesViewModel
 
     private lateinit var fragmentBinding: FragmentMainBinding
 
-    private lateinit var dataListAdapterLaunch: LaunchEventListAdapter
+    private lateinit var launchEventListAdapter: LaunchEventListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +50,7 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
         savedInstanceState: Bundle?
     ): View {
         fragmentBinding = FragmentMainBinding.inflate(inflater, container, false)
-        dataListAdapterLaunch = LaunchEventListAdapter {
+        launchEventListAdapter = LaunchEventListAdapter {
             val action =
                 LaunchEventListFragmentDirections.actionMainFragmentToDetailFragment(it)
             findNavController().navigate(action)
@@ -62,7 +60,7 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
     }
 
     private fun setUpRecyclerView() {
-        fragmentBinding.launchEventRecyclerView.adapter = dataListAdapterLaunch
+        fragmentBinding.launchEventRecyclerView.adapter = launchEventListAdapter
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -80,22 +78,12 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
-        if (context is OnFragmentInteractionListener) {
-            listener = context
-        } else {
-            throw RuntimeException("$context must implement OnFragmentInteractionListener")
-        }
         super.onAttach(context)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         fragmentBinding.launchEventRecyclerView.adapter = null
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        listener = null
     }
 
     private fun render(viewState: UpComingLaunchContract.ViewState) {
@@ -109,9 +97,11 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
             showListView(false)
         }
 
-        if (viewState.activityData.isNotEmpty()) {
-            showListView(true)
-            dataListAdapterLaunch.submitList(viewState.activityData)
+        viewState.activityData?.let {
+            if (it.isNotEmpty()) {
+                showListView(true)
+                launchEventListAdapter.submitList(viewState.activityData)
+            }
         }
     }
 
@@ -122,8 +112,6 @@ class LaunchEventListFragment : Fragment(), HasAndroidInjector {
     private fun showListView(show: Boolean) {
         fragmentBinding.launchEventRecyclerView.visibility = if (show) View.VISIBLE else View.GONE
     }
-
-    interface OnFragmentInteractionListener
 
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
 }
